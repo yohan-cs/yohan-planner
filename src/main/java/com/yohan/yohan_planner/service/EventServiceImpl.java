@@ -1,9 +1,9 @@
 package com.yohan.yohan_planner.service;
 
+import com.yohan.yohan_planner.dao.EventDAO;
 import com.yohan.yohan_planner.exception.EventNotFoundException;
 import com.yohan.yohan_planner.exception.InvalidTimeException;
 import com.yohan.yohan_planner.model.Event;
-import com.yohan.yohan_planner.repository.EventRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,11 +18,29 @@ import java.util.List;
 public class EventServiceImpl implements EventService {
 
     private static final Logger logger = LoggerFactory.getLogger(EventServiceImpl.class);
-    private final EventRepository eventRepository;
+    private final EventDAO eventDAO;
 
     @Autowired
-    public EventServiceImpl(EventRepository eventRepository) {
-        this.eventRepository = eventRepository;
+    public EventServiceImpl(EventDAO eventDAO) {
+        this.eventDAO = eventDAO;
+    }
+
+    @Override
+    public List<Event> getAllEvents() {
+        logger.info("Fetching all events");
+        List<Event> events = eventDAO.findAll();
+        logger.info("Total events found: {}", events.size());
+        return events;
+    }
+
+    @Override
+    public Event getEventById(Long id) {
+        logger.info("Fetching event by ID: {}", id);
+        Event event = eventDAO.findById(id).orElseThrow(() -> {
+            return new EventNotFoundException(id);
+        });
+        logger.info("Event with ID {} found", id);
+        return event;
     }
 
     @Override
@@ -31,36 +49,30 @@ public class EventServiceImpl implements EventService {
         isStartBeforeEnd(event.getStartTime(), event.getEndTime());
         calculateDuration(event);
         logger.info("Created event: {}", event.getName());
-        return eventRepository.save(event);
+        return eventDAO.save(event);
     }
 
-    @Override
-    public List<Event> getAllEvents() {
-        logger.info("Fetching all events");
-        List<Event> events = eventRepository.findAll();
-        logger.info("Total events found: {}", events.size());
-        return events;
-    }
 
     @Override
-    public Event getEventById(Long id) {
-        logger.info("Fetching event by ID: {}", id);
-        Event event = eventRepository.findById(id)
-                .orElseThrow(() -> {
-                    return new EventNotFoundException(id);
-                });
-        logger.info("Event with ID {} found", id);
-        return event;
+    @Transactional
+    public void deleteEvent(Long id) {
+        logger.info("Deleting event with ID: {}", id);
+
+        Event event = eventDAO.findById(id).orElseThrow(() -> {
+            return new EventNotFoundException(id);
+        });
+
+        eventDAO.deleteById(id);
+        logger.info("Event with ID {} deleted successfully", id);
     }
 
     @Override
     @Transactional
     public Event updateEvent(Long id, Event updatedEvent) {
         logger.info("Updating event with ID: {}", id);
-        Event event = eventRepository.findById(id)
-                .orElseThrow(() -> {
-                    return new EventNotFoundException(id);
-                });
+        Event event = eventDAO.findById(id).orElseThrow(() -> {
+            return new EventNotFoundException(id);
+        });
 
         if (updatedEvent.getName() != null) {
             if (updatedEvent.getName().isBlank()) {
@@ -77,23 +89,9 @@ public class EventServiceImpl implements EventService {
             event.setDescription(updatedEvent.getDescription());
         }
 
-        Event savedEvent = eventRepository.save(event);
+        Event savedEvent = eventDAO.save(event);
         logger.info("Event with ID {} updated successfully", id);
         return savedEvent;
-    }
-
-    @Override
-    @Transactional
-    public void deleteEvent(Long id) {
-        logger.info("Deleting event with ID: {}", id);
-
-        Event event = eventRepository.findById(id)
-                .orElseThrow(() -> {
-                    return new EventNotFoundException(id);
-                });
-
-        eventRepository.deleteById(id);
-        logger.info("Event with ID {} deleted successfully", id);
     }
 
     private void updateStartEndTime(Event event, Event updatedEvent) {
