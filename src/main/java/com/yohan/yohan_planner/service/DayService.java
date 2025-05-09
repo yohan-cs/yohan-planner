@@ -9,6 +9,7 @@ import java.util.Optional;
 public interface DayService {
     List<Day> findAllDays();
     Day getDayById(Long id);
+    Day getOrCreateDay(LocalDate date);
     Optional<Day> getDayByDate(LocalDate date);
     Day save(Day day);
 }

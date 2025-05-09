@@ -42,6 +42,11 @@ public class DayServiceImpl implements DayService {
     }
 
     @Override
+    public Day getOrCreateDay(LocalDate date) {
+        return getDayByDate(date).orElseGet(() -> save(new Day(date)));
+    }
+
+    @Override
     public Optional<Day> getDayByDate(LocalDate date) {
         logger.info("Fetching day by date: {}", date);
         return dayDAO.findByDate(date);
