@@ -82,6 +82,18 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
+    // day not found
+    @ExceptionHandler(DayNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleDayNotFoundException(DayNotFoundException ex) {
+        logger.warn("DayNotFoundException: {}", ex.getMessage());
+        ErrorResponse error = new ErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),
+                System.currentTimeMillis()
+        );
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
     // invalid time
     @ExceptionHandler(InvalidTimeException.class)
     public ResponseEntity<ErrorResponse> handleInvalidTimeException(InvalidTimeException ex) {

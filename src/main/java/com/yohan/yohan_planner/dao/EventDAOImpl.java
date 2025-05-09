@@ -51,6 +51,11 @@ public class EventDAOImpl implements EventDAO {
 
         Event event = entityManager.find(Event.class, id);
 
+        if (event.getDay() != null) {
+            event.setDay(null);
+        }
+
         entityManager.remove(event);
     }
 }
+

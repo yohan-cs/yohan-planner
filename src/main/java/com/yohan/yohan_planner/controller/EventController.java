@@ -17,7 +17,6 @@ import java.util.List;
 public class EventController {
 
     private final EventService eventService;
-    private static final Logger logger = LoggerFactory.getLogger(EventController.class);
 
     @Autowired
     public EventController(EventService eventService) {

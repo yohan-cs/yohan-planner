@@ -1,5 +1,6 @@
 package com.yohan.yohan_planner.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
@@ -38,6 +39,11 @@ public class Event {
     @Size(max = 255, message = "Description must be less than 255 characters")
     private String description; // Description of event
 
+    @ManyToOne
+    @JoinColumn(name = "day_id") // Foreign key to the Day entity
+    @JsonBackReference
+    private Day day; // Day associated with this event
+
     public Event() {
     }
 
@@ -68,6 +74,10 @@ public class Event {
         this.description = description;
     }
 
+    public Long getId() {
+        return id;
+    }
+
     public String getName() {
         return name;
     }
@@ -86,5 +96,26 @@ public class Event {
 
     public String getDescription() {
         return description;
+    }
+
+    public Day getDay() {
+        return day;
+    }
+
+    public void setDay(Day day) {
+        this.day = day;
+    }
+
+    @Override
+    public String toString() {
+        return "Event{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", startTime=" + startTime +
+                ", endTime=" + endTime +
+                ", duration=" + duration +
+                ", description='" + description + '\'' +
+                ", day=" + (day != null ? day.getDate() + " (" + day.getDayOfWeek() + ")" : "No day assigned") +
+                '}';
     }
 }
