@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -47,6 +48,14 @@ public class EventServiceImpl implements EventService {
         logger.info("Event with ID {} found", id);
         return event;
     }
+
+    @Override
+    public List<Event> getEventsByDate(LocalDate date) {
+        logger.info("Fetching events for date: {}", date);
+        Day day = dayService.getDayByDate(date).orElseThrow(() -> new DayNotFoundException(date));
+        return day.getEvents();
+    }
+
 
     @Override
     @Transactional

@@ -3,13 +3,12 @@ package com.yohan.yohan_planner.controller;
 import com.yohan.yohan_planner.model.Event;
 import com.yohan.yohan_planner.service.EventService;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -41,8 +40,13 @@ public class EventController {
     @GetMapping("/{id}")
     public ResponseEntity<Event> getEventById(@PathVariable Long id) {
         Event event = eventService.getEventById(id);
-
         return new ResponseEntity<>(event, HttpStatus.OK);
+    }
+
+    // Get events by date (GET)
+    @GetMapping("/day/{date}")
+    public List<Event> getEventsByDate(@PathVariable LocalDate date) {
+        return eventService.getEventsByDate(date);
     }
 
     // Update an event (PATCH)
