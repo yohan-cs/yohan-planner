@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Entity
 @Table(name = "events")
@@ -19,18 +19,18 @@ public class Event {
     private Long id;
 
     @NotBlank(message = "Event name can not be blank")
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private String name; // Name of event
 
     @NotNull(message = "Start time is required")
     @Column(nullable = false)
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime startTime; // Time of event start
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
+    private ZonedDateTime startTime; // Time of event start
 
     @NotNull(message = "End time is required")
     @Column(nullable = false)
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime endTime; // Time of event end
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
+    private ZonedDateTime endTime; // Time of event end
 
     @Column(nullable = false)
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
@@ -47,7 +47,7 @@ public class Event {
     public Event() {
     }
 
-    public Event(String name, LocalDateTime startTime, LocalDateTime endTime, String description) {
+    public Event(String name, ZonedDateTime startTime, ZonedDateTime endTime, String description) {
         this.name = name;
         this.startTime = startTime;
         this.endTime = endTime;
@@ -58,11 +58,11 @@ public class Event {
         this.name = name;
     }
 
-    public void setStartTime(LocalDateTime startTime) {
+    public void setStartTime(ZonedDateTime startTime) {
         this.startTime = startTime;
     }
 
-    public void setEndTime(LocalDateTime endTime) {
+    public void setEndTime(ZonedDateTime endTime) {
         this.endTime = endTime;
     }
 
@@ -82,11 +82,11 @@ public class Event {
         return name;
     }
 
-    public LocalDateTime getStartTime() {
+    public ZonedDateTime getStartTime() {
         return startTime;
     }
 
-    public LocalDateTime getEndTime() {
+    public ZonedDateTime getEndTime() {
         return endTime;
     }
 

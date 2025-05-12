@@ -10,10 +10,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,18 +37,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
         logger.warn("Validation failed: {}", ex.getMessage());
-        StringBuilder errorMessage = new StringBuilder("Validation failed: ");
-        ex.getBindingResult().getFieldErrors().forEach(error -> {
-            errorMessage.append(error.getField())
-                    .append(" - ")
-                    .append(error.getDefaultMessage())
-                    .append("; ");
-        });
+
+        Map<String, String> fieldErrors = new HashMap<>();
+        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
+            fieldErrors.put(error.getField(), error.getDefaultMessage());
+        }
 
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
-                errorMessage.toString(),
-                System.currentTimeMillis()
+                "Validation failed",
+                System.currentTimeMillis(),
+                fieldErrors
         );
 
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
@@ -97,7 +94,7 @@ public class GlobalExceptionHandler {
     // invalid time
     @ExceptionHandler(InvalidTimeException.class)
     public ResponseEntity<ErrorResponse> handleInvalidTimeException(InvalidTimeException ex) {
-        logger.warn("Invalid start and end time. Start time must be before end time");
+        logger.warn("InvalidTimeException: {}", ex.getMessage());
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
                 ex.getMessage(),
@@ -111,7 +108,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleMethodNotAllowed(org.springframework.web.HttpRequestMethodNotSupportedException ex) {
         logger.warn("Method not allowed: {}", ex.getMethod());
         ErrorResponse error = new ErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.METHOD_NOT_ALLOWED.value(),
                 ex.getMessage(),
                 System.currentTimeMillis()
         );
@@ -134,8 +131,14 @@ public class GlobalExceptionHandler {
     // type mismatch
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
-        String message = String.format("Invalid value '%s' for parameter '%s'. Expected type: %s",
-                ex.getValue(), ex.getName(), ex.getRequiredType().getSimpleName());
+        String expectedType = (ex.getRequiredType() != null)
+                ? ex.getRequiredType().getSimpleName()
+                : "Unknown";
+
+        String message = String.format(
+                "Invalid value '%s' for parameter '%s'. Expected type: %s",
+                ex.getValue(), ex.getName(), expectedType
+        );
 
         ErrorResponse error = new ErrorResponse(
                 HttpStatus.BAD_REQUEST.value(),
@@ -163,13 +166,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler
     public ResponseEntity<ErrorResponse> handleException(Exception ex) {
 
-        logger.error("Catch all exception {}", ex.getMessage());
+        logger.error("Unhandled exception", ex);
         ErrorResponse error = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 ex.getMessage(),
                 System.currentTimeMillis()
         );
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
 }

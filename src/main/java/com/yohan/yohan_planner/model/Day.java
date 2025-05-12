@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,7 +29,7 @@ public class Day {
 
     // One-to-many relationship with Event (One Day can have multiple Events)
     @NotNull
-    @OneToMany(mappedBy = "day", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "day")
     @JsonManagedReference
     private List<Event> events = new ArrayList<>();
 
@@ -47,10 +48,6 @@ public class Day {
         this.id = id;
     }
 
-    public LocalDate getDate() {
-        return date;
-    }
-
     public void setDate(LocalDate date) {
         this.date = date;
         this.dayOfWeek = date.getDayOfWeek();
@@ -62,6 +59,10 @@ public class Day {
 
     public List<Event> getEvents() {
         return events;
+    }
+
+    public LocalDate getDate() {
+        return date;
     }
 
     public void setEvents(List<Event> events) {

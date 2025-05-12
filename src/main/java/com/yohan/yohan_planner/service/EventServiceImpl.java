@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -52,7 +54,11 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<Event> getEventsByDate(LocalDate date) {
         logger.info("Fetching events for date: {}", date);
-        Day day = dayService.getDayByDate(date).orElseThrow(() -> new DayNotFoundException(date));
+        Optional<Day> optionalDay = dayService.getDayByDate(date);
+        if (optionalDay.isEmpty()) {
+            return new ArrayList<>();
+        }
+        Day day = optionalDay.get();
         return day.getEvents();
     }
 
@@ -60,10 +66,10 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public Event createEvent(Event event) {
-        Day day = dayService.getOrCreateDay(event.getStartTime().toLocalDate());
+        Day day = dayService.getOrCreateDay(event.getStartTime());
         logger.info("Creating event: {}", event.getName());
         validateStartBeforeEnd(event.getStartTime(), event.getEndTime());
-        validateNoConflicts(event.getStartTime(), event.getEndTime(), event);
+        validateNoConflicts(event.getStartTime(), event.getEndTime(), null); // No event ID for creation
         long duration = calculateDuration(event.getStartTime(), event.getEndTime());
         event.setDuration(duration);
         event.setDay(day);
@@ -95,11 +101,11 @@ public class EventServiceImpl implements EventService {
 
         if (updatedEvent.getStartTime() != null || updatedEvent.getEndTime() != null) {
             // Determine the new start and end times without mutating the event
-            LocalDateTime newStart = updatedEvent.getStartTime() != null
+            ZonedDateTime newStart = updatedEvent.getStartTime() != null
                     ? updatedEvent.getStartTime()
                     : event.getStartTime();
 
-            LocalDateTime newEnd = updatedEvent.getEndTime() != null
+            ZonedDateTime newEnd = updatedEvent.getEndTime() != null
                     ? updatedEvent.getEndTime()
                     : event.getEndTime();
 
@@ -107,7 +113,7 @@ public class EventServiceImpl implements EventService {
             validateStartBeforeEnd(newStart, newEnd);
 
             // Validate no conflicts with other events (using the new time range)
-            validateNoConflicts(newStart, newEnd, event);
+            validateNoConflicts(newStart, newEnd, event.getId());
 
             // Apply the new times
             event.setStartTime(newStart);
@@ -135,7 +141,7 @@ public class EventServiceImpl implements EventService {
         return saved;
     }
 
-    private long calculateDuration(LocalDateTime startTime, LocalDateTime endTime) {
+    private long calculateDuration(ZonedDateTime startTime, ZonedDateTime endTime) {
 
         long duration = Duration.between(startTime, endTime).toMinutes();
 
@@ -144,7 +150,7 @@ public class EventServiceImpl implements EventService {
         return duration;
     }
 
-    private void validateStartBeforeEnd(LocalDateTime startTime, LocalDateTime endTime) {
+    private void validateStartBeforeEnd(ZonedDateTime startTime, ZonedDateTime endTime) {
         logger.info("Validating start and end time");
         if (!startTime.isBefore(endTime)) {
             throw new InvalidTimeException(startTime, endTime);
@@ -152,20 +158,14 @@ public class EventServiceImpl implements EventService {
         logger.info("Start and end time are valid");
     }
 
-    // For event creation (no ID yet)
-    private void validateNoConflicts(LocalDateTime startTime, LocalDateTime endTime) {
+    private void validateNoConflicts(ZonedDateTime startTime, ZonedDateTime endTime, Long excludeEventId) {
         logger.info("Checking for conflicts during creation (no event ID)");
-        checkConflicts(startTime, endTime, null);
+        checkConflicts(startTime, endTime, excludeEventId);
     }
 
-    // For event update (exclude the current event's ID)
-    private void validateNoConflicts(LocalDateTime startTime, LocalDateTime endTime, Event currentEvent) {
-        logger.info("Checking for conflicts during update (event ID: {})", currentEvent.getId());
-        checkConflicts(startTime, endTime, currentEvent.getId());
-    }
 
-    // Shared private method to handle conflict checking
-    private void checkConflicts(LocalDateTime startTime, LocalDateTime endTime, Long excludeEventId) {
+    // Core conflict-checking logic
+    private void checkConflicts(ZonedDateTime startTime, ZonedDateTime endTime, Long excludeEventId) {
         Day day = dayService.getDayByDate(startTime.toLocalDate())
                 .orElseThrow(() -> new DayNotFoundException(startTime.toLocalDate()));
 

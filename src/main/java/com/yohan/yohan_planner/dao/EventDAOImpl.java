@@ -23,7 +23,7 @@ public class EventDAOImpl implements EventDAO {
     @Override
     public List<Event> findAll() {
 
-        TypedQuery<Event> query = entityManager.createQuery("from Event", Event.class);
+        TypedQuery<Event> query = entityManager.createQuery("from Event e order by e.startTime", Event.class);
 
         List<Event> events = query.getResultList();
 
@@ -50,10 +50,6 @@ public class EventDAOImpl implements EventDAO {
     public void deleteById(Long id) {
 
         Event event = entityManager.find(Event.class, id);
-
-        if (event.getDay() != null) {
-            event.setDay(null);
-        }
 
         entityManager.remove(event);
     }
