@@ -66,6 +66,7 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public Event createEvent(Event event) {
+        // check if day of event exists, if not create it
         Day day = dayService.getOrCreateDay(event.getStartTime());
         logger.info("Creating event: {}", event.getName());
         validateStartBeforeEnd(event.getStartTime(), event.getEndTime());
@@ -159,7 +160,7 @@ public class EventServiceImpl implements EventService {
     }
 
     private void validateNoConflicts(ZonedDateTime startTime, ZonedDateTime endTime, Long excludeEventId) {
-        logger.info("Checking for conflicts during creation (no event ID)");
+        logger.info("Checking for conflicts (excludedEventId = {})", excludeEventId);
         checkConflicts(startTime, endTime, excludeEventId);
     }
 

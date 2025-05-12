@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +29,6 @@ public class Day {
     private DayOfWeek dayOfWeek;
 
     // One-to-many relationship with Event (One Day can have multiple Events)
-    @NotNull
     @OneToMany(mappedBy = "day")
     @JsonManagedReference
     private List<Event> events = new ArrayList<>();

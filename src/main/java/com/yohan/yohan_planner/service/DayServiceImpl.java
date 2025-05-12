@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +48,9 @@ public class DayServiceImpl implements DayService {
     @Override
     public Day getOrCreateDay(ZonedDateTime startTime) {
         LocalDate date = startTime.toLocalDate();
+
+        logger.info("Checking if day exists for date: {}", date);
+
         return getDayByDate(date).orElseGet(() -> {
             logger.info("No existing day found for date: {}. Creating new Day", date);
             Day newDay = new Day(date);
@@ -70,8 +74,4 @@ public class DayServiceImpl implements DayService {
         return zonedDateTime.toLocalDate();
     }
 
-    public Long getDayIdByDate(LocalDate date) {
-        Day day = getDayByDate(date).orElseThrow(() -> new DayNotFoundException(date));
-        return day.getId();  // This will return the ID of the found Day
-    }
 }
