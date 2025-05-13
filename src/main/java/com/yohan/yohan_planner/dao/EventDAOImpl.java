@@ -23,7 +23,8 @@ public class EventDAOImpl implements EventDAO {
     @Override
     public List<Event> findAll() {
 
-        TypedQuery<Event> query = entityManager.createQuery("from Event e order by e.startTime", Event.class);
+        TypedQuery<Event> query = entityManager.createQuery(
+                "SELECT e FROM Event e", Event.class);
 
         List<Event> events = query.getResultList();
 

@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,12 +68,20 @@ public class EventServiceImpl implements EventService {
         // check if day of event exists, if not create it
         Day day = dayService.getOrCreateDay(event.getStartTime());
         logger.info("Creating event: {}", event.getName());
+
+        // validation
         validateStartBeforeEnd(event.getStartTime(), event.getEndTime());
         validateNoConflicts(event.getStartTime(), event.getEndTime(), null); // No event ID for creation
+
+        // set fields
         long duration = calculateDuration(event.getStartTime(), event.getEndTime());
         event.setDuration(duration);
         event.setDay(day);
-        return saveEvent(event);
+
+        Event savedEvent = saveEvent(event);
+        logger.info("Event with ID {} created successfully", savedEvent.getId());
+
+        return savedEvent;
     }
 
     @Override
@@ -93,6 +100,8 @@ public class EventServiceImpl implements EventService {
     public Event updateEvent(Long id, Event updatedEvent) {
         logger.info("Updating event with ID: {}", id);
         Event event = eventDAO.findById(id).orElseThrow(() -> new EventNotFoundException(id));
+
+        // Update event name
         if (updatedEvent.getName() != null) {
             if (updatedEvent.getName().isBlank()) {
                 throw new IllegalArgumentException("Event name can not be blank.");
@@ -100,6 +109,7 @@ public class EventServiceImpl implements EventService {
             event.setName(updatedEvent.getName());
         }
 
+        // Update event start or end time
         if (updatedEvent.getStartTime() != null || updatedEvent.getEndTime() != null) {
             // Determine the new start and end times without mutating the event
             ZonedDateTime newStart = updatedEvent.getStartTime() != null
@@ -127,6 +137,7 @@ public class EventServiceImpl implements EventService {
             logger.info("Updated times and duration for event ID {}", id);
         }
 
+        // Update event description
         if (updatedEvent.getDescription() != null) {
             event.setDescription(updatedEvent.getDescription());
         }

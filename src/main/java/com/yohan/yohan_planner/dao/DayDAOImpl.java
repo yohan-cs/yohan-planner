@@ -25,7 +25,8 @@ public class DayDAOImpl implements DayDAO {
     @Override
     public List<Day> findAll() {
 
-        TypedQuery<Day> query = entityManager.createQuery("from Day", Day.class);
+        TypedQuery<Day> query = entityManager.createQuery(
+                "from Day", Day.class);
 
         return query.getResultList();
     }
